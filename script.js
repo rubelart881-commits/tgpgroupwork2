@@ -1,4 +1,4 @@
-// Firebase কনফিগারেশন 
+// Firebase কনফিগারেশন - তোমার দেওয়া কী-গুলো এখানে বসানো আছে
 const firebaseConfig = {
     apiKey: "AIzaSyA6Qcog97mvfc_RysaH420wdIqNweGgHg8",
     authDomain: "tgp-group-work.firebaseapp.com",
@@ -10,13 +10,13 @@ const firebaseConfig = {
     measurementId: "G-8K6NH5KGZF"
 };
 
-// Firebase শুরু করা 
+// Firebase শুরু করা
 firebase.initializeApp(firebaseConfig);
 const database = firebase.database();
 
 // Global Variables
 let currentUser = { userId: null, nickname: null, sessionCode: null };
-let sessionListenerUnsubscribe = null; 
+let sessionListenerUnsubscribe = null;
 
 // DOM Elements
 const lobbyView = document.getElementById("lobby-view");
@@ -37,35 +37,35 @@ const cancelBtn = document.getElementById("cancel-btn");
 const progressForm = document.getElementById("progress-form");
 const loadingOverlay = document.getElementById("loading-overlay");
 
-// ইউজার আইডি তৈরি বা পুরনো আইডি খুঁজে বের করার ফাংশন
-function getOrGenerateUserId() {
-    let userId = localStorage.getItem("missionScholarship_permanent_userId");
-    if (!userId) {
-        userId = "user_" + Date.now() + "_" + Math.random().toString(36).substr(2, 9);
-        localStorage.setItem("missionScholarship_permanent_userId", userId);
+// ---> এই ফাংশনটি এখন অ্যাপের মূল ভিত্তি <---
+function getOrGeneratePermanentUserId() {
+    let permanentId = localStorage.getItem("missionScholarship_permanent_userId");
+    if (!permanentId) {
+        permanentId = "user_" + Date.now() + "_" + Math.random().toString(36).substr(2, 9);
+        localStorage.setItem("missionScholarship_permanent_userId", permanentId);
     }
-    return userId;
+    return permanentId;
 }
 
-// Utility and Local Storage Functions
+// Utility Functions
 function generateSessionCode() { const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"; let result = ""; for (let i = 0; i < 6; i++) { result += chars.charAt(Math.floor(Math.random() * chars.length)); } return result; }
-function showLoading() { loadingOverlay.classList.add("active"); }
+function showLoading(msg = 'Loading...') { loadingOverlay.classList.add("active"); }
 function hideLoading() { loadingOverlay.classList.remove("active"); }
 function showView(viewName) { lobbyView.classList.remove("active"); dashboardView.classList.remove("active"); document.getElementById(`${viewName}-view`).classList.add("active"); }
+
+// Local Storage for current session
 function saveCurrentSession() { localStorage.setItem("missionScholarship_currentSession", JSON.stringify(currentUser)); }
 function loadCurrentSession() { const data = localStorage.getItem("missionScholarship_currentSession"); if (data) { currentUser = JSON.parse(data); return true; } return false; }
 function clearCurrentSession() { localStorage.removeItem("missionScholarship_currentSession"); }
 
-
-// ---> Session Management Functions (Fully Updated) <---
-
+// Session Management Functions
 async function createSession() {
     const nickname = createNicknameInput.value.trim();
     if (!nickname) return alert("Please enter a nickname");
     showLoading();
     try {
         const sessionCode = generateSessionCode();
-        currentUser.userId = getOrGenerateUserId();
+        currentUser.userId = getOrGeneratePermanentUserId();
         currentUser.nickname = nickname;
         currentUser.sessionCode = sessionCode;
 
@@ -88,32 +88,17 @@ async function joinSession() {
     joinError.textContent = "";
 
     try {
-        const sessionRef = database.ref(`sessions/${sessionCode}`);
-        const snapshot = await sessionRef.once("value");
+        const snapshot = await database.ref(`sessions/${sessionCode}`).once("value");
         if (!snapshot.exists()) {
             joinError.textContent = "Session code not found.";
             return;
         }
 
-        const members = snapshot.val().members || {};
-        let existingUserId = null;
-
-        // চেক করা হচ্ছে যে এই নামে আগে থেকেই কেউ আছে কি না
-        for (const uid in members) {
-            if (members[uid].nickname.toLowerCase() === nickname.toLowerCase()) {
-                existingUserId = uid;
-                break;
-            }
-        }
-        
-        currentUser.userId = existingUserId || getOrGenerateUserId();
+        currentUser.userId = getOrGeneratePermanentUserId();
         currentUser.nickname = nickname;
         currentUser.sessionCode = sessionCode;
 
-        // যদি নতুন ইউজার হয়, তাহলে তাকে ডেটাবেসে যোগ করা
-        if (!existingUserId) {
-            await database.ref(`sessions/${sessionCode}/members/${currentUser.userId}`).set({ nickname: nickname });
-        }
+        await database.ref(`sessions/${sessionCode}/members/${currentUser.userId}`).set({ nickname: nickname });
 
         saveCurrentSession();
         initializeDashboard(sessionCode);
@@ -123,40 +108,40 @@ async function joinSession() {
 
 function logout() {
     if (sessionListenerUnsubscribe) sessionListenerUnsubscribe();
-    clearCurrentSession(); // শুধু বর্তমান সেশনের তথ্য মোছা হচ্ছে
-    currentUser.sessionCode = null; 
-    currentUser.nickname = null; // নিকনেমও রিসেট করা হচ্ছে
+    clearCurrentSession();
+    currentUser.sessionCode = null;
+    currentUser.nickname = null;
     showView("lobby");
 }
 
-// Dashboard and Real-time Functions
 function initializeDashboard(sessionCode) {
     currentSessionCodeSpan.textContent = sessionCode;
     showView("dashboard");
     setupRealtimeListeners(sessionCode);
 }
 
+// Real-time Dashboard & Score Calculation (No change needed here)
+function setupRealtimeListeners(sessionCode) { /* আগের মতোই থাকবে */ }
+function renderDashboard(members, scores) { /* আগের মতোই থাকবে */ }
+// (আগের কোডের বাকি ফাংশনগুলো এখানে அப்படியே থাকবে... `createMemberCard`, `calculateUserStats`, `openProgressModal`... etc)
+
+
+// --- এখান থেকে নিচের সব ফাংশন আগের কোডের সাথে মিলিয়ে নাও অথবা পুরোটা কপি করো ---
+
 function setupRealtimeListeners(sessionCode) {
     if (sessionListenerUnsubscribe) sessionListenerUnsubscribe();
     const sessionRef = database.ref(`sessions/${sessionCode}`);
-    const listener = sessionRef.on("value", snapshot => {
+    const listener = sessionRef.on("value", (snapshot) => {
         const data = snapshot.val();
         if (data && data.members) {
-            // নিশ্চিত করা যে বর্তমান ইউজার এখনো মেম্বার লিস্টে আছে
-            if (data.members[currentUser.userId]) {
-                 renderDashboard(data.members, data.scores || {});
-            } else {
-                 alert("You have been removed from this session.");
-                 logout();
-            }
+            renderDashboard(data.members, data.scores || {});
         } else {
-             alert("This session seems to have been deleted.");
-             logout();
+            alert("This session may have been deleted.");
+            logout();
         }
     });
     sessionListenerUnsubscribe = () => sessionRef.off("value", listener);
 }
-
 
 function renderDashboard(members, scores) {
     membersGrid.innerHTML = "";
@@ -206,24 +191,21 @@ function calculateUserStats(userScores) {
     });
     
     // Streak Calculation
-    const loggedDates = Object.keys(userScores).sort((a,b) => new Date(b) - new Date(a));
-    let lastDate = new Date();
-    lastDate.setHours(0,0,0,0);
-    
-    for(const dateStr of loggedDates) {
-        const logDate = new Date(dateStr);
-        logDate.setHours(0,0,0,0);
-        
-        const diff = (lastDate - logDate) / (1000 * 60 * 60 * 24);
-        
-        if (diff === 0) { // today
-            streak++;
-            lastDate.setDate(lastDate.getDate() - 1);
-        } else if (diff === 1 && streak > 0) { // yesterday
-            streak++;
-            lastDate.setDate(lastDate.getDate() - 1);
-        } else {
-            break;
+    const loggedDates = Object.keys(userScores).sort().reverse();
+    if (loggedDates.length > 0) {
+        let currentDate = new Date(); currentDate.setHours(0,0,0,0);
+        for (const dateStr of loggedDates) {
+            let logDate = new Date(dateStr); logDate.setHours(0,0,0,0);
+            const diffDays = Math.round((currentDate - logDate) / (1000 * 60 * 60 * 24));
+            if (diffDays === 0) {
+                if (streak === 0) streak = 1;
+                currentDate.setDate(currentDate.getDate() - 1);
+            } else if (diffDays === 1 && streak > 0) {
+                streak++;
+                currentDate.setDate(currentDate.getDate() - 1);
+            } else if (diffDays > 1) {
+                break;
+            }
         }
     }
     
@@ -232,34 +214,73 @@ function calculateUserStats(userScores) {
 
 
 // Progress Modal Functions
-async function openProgressModal() { /*...*/ } // No change
-async function saveProgress(event) { /*...*/ } // No change
+async function openProgressModal() {
+    progressForm.reset();
+    const today = new Date().toISOString().split("T")[0];
+    const snapshot = await database.ref(`sessions/${currentUser.sessionCode}/scores/${currentUser.userId}/${today}`).once("value");
+    const todayData = snapshot.val();
+    if (todayData) {
+        Object.entries(todayData).forEach(([subject, data]) => {
+            document.getElementById(`${subject.toLowerCase()}-score`).value = data.score || "";
+            document.getElementById(`${subject.toLowerCase()}-note`).value = data.note || "";
+        });
+    }
+    progressModal.classList.add("active");
+}
+
+function closeProgressModal() { progressModal.classList.remove("active"); }
+
+async function saveProgress(event) {
+    event.preventDefault();
+    const today = new Date().toISOString().split("T")[0];
+    const subjects = ["math", "english", "bangla", "science"];
+    const progressData = {};
+
+    subjects.forEach((subject) => {
+        const score = Number.parseInt(document.getElementById(`${subject}-score`).value) || 0;
+        const note = document.getElementById(`${subject}-note`).value.trim();
+        if (score > 0 || note) { progressData[subject.charAt(0).toUpperCase() + subject.slice(1)] = { score, note }; }
+    });
+    
+    if (Object.keys(progressData).length === 0) { alert("Please enter at least one score or note"); return; }
+
+    showLoading();
+    try {
+        await database.ref(`sessions/${currentUser.sessionCode}/scores/${currentUser.userId}/${today}`).set(progressData);
+        closeProgressModal();
+    } catch (error) { console.error("Save Progress Error:", error); alert("Failed to save progress."); } 
+    finally { hideLoading(); }
+}
 
 
-// Event Listeners (all are fine)
+// Event Listeners Setup
 createSessionBtn.addEventListener("click", createSession);
 joinSessionBtn.addEventListener("click", joinSession);
 logoutBtn.addEventListener("click", logout);
 logProgressBtn.addEventListener("click", openProgressModal);
-//... and so on ...
+closeModalBtn.addEventListener("click", closeProgressModal);
+cancelBtn.addEventListener("click", closeProgressModal);
+progressForm.addEventListener("submit", saveProgress);
+progressModal.addEventListener("click", e => { if (e.target === progressModal) closeProgressModal(); });
 
-// --- App Initialization (Updated) ---
+// App Initialization
 document.addEventListener("DOMContentLoaded", () => {
-    getOrGenerateUserId(); // অ্যাপ শুরুতেই ডিভাইসের জন্য একটা পার্মানেন্ট আইডি তৈরি বা লোড করে নেবে
-    
+    // এই লাইনটা নিশ্চিত করে যে তোমার ডিভাইসের একটা স্থায়ী আইডি আছে
+    currentUser.userId = getOrGeneratePermanentUserId(); 
+
     if (loadCurrentSession() && currentUser.sessionCode) {
-        showLoading("Rejoining previous session...");
-        database.ref(`sessions/${currentUser.sessionCode}/members/${currentUser.userId}`).once("value")
+        showLoading("Rejoining session...");
+        database.ref(`sessions/${currentUser.sessionCode}`).once("value")
             .then((snapshot) => {
-                if (snapshot.exists()) {
+                if (snapshot.exists() && snapshot.val().members[currentUser.userId]) {
                     initializeDashboard(currentUser.sessionCode);
                 } else {
-                    // সেশনটা আছে, কিন্তু তোমাকে হয়তো কেউ রিমুভ করে দিয়েছে
-                    logout();
+                    // সেশনটা হয় মুছে গেছে অথবা তুমি এই সেশনের মেম্বার নও
+                    clearCurrentSession();
                     showView("lobby");
                 }
             })
-            .catch(error => { console.error("Rejoin failed:", error); logout(); })
+            .catch(error => { console.error("Rejoin failed:", error); logout(); }) 
             .finally(() => hideLoading());
     }
 });
