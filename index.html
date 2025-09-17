@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mission Scholarship: The Comeback</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Lobby View -->
+        <div id="lobby-view" class="view active">
+            <div class="lobby-container">
+                <h1 class="app-title">Mission Scholarship: The Comeback</h1>
+                
+                <!-- Create Session Section -->
+                <div class="session-card">
+                    <h2>Create New Session</h2>
+                    <div class="input-group">
+                        <input type="text" id="create-nickname" placeholder="Enter your nickname" maxlength="20">
+                        <button id="create-session-btn" class="primary-btn">Create Session</button>
+                    </div>
+                </div>
+
+                <!-- Join Session Section -->
+                <div class="session-card">
+                    <h2>Join Existing Session</h2>
+                    <div class="input-group">
+                        <input type="text" id="join-nickname" placeholder="Enter your nickname" maxlength="20">
+                        <input type="text" id="session-code" placeholder="Enter session code" maxlength="6">
+                        <button id="join-session-btn" class="primary-btn">Join Session</button>
+                    </div>
+                    <div id="join-error" class="error-message"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Dashboard View -->
+        <div id="dashboard-view" class="view">
+            <div class="dashboard-container">
+                <!-- Dashboard Header -->
+                <div class="dashboard-header">
+                    <div class="session-info">
+                        <span>Session Code: <strong id="current-session-code"></strong></span>
+                    </div>
+                    <button id="logout-btn" class="logout-btn">Logout</button>
+                </div>
+
+                <!-- Log Progress Button -->
+                <div class="log-progress-section">
+                    <button id="log-progress-btn" class="log-progress-btn">Log Today's Progress</button>
+                </div>
+
+                <!-- Members Grid -->
+                <div id="members-grid" class="members-grid">
+                    <!-- Member cards will be dynamically generated here -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Progress Logging Modal -->
+        <div id="progress-modal" class="modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2>Log Today's Progress</h2>
+                    <button id="close-modal" class="close-btn">&times;</button>
+                </div>
+                <form id="progress-form">
+                    <div class="subjects-container">
+                        <!-- Math Section -->
+                        <div class="subject-section">
+                            <h3>Math</h3>
+                            <div class="subject-inputs">
+                                <input type="number" id="math-score" min="0" max="10" placeholder="Score (0-10)">
+                                <textarea id="math-note" placeholder="Optional notes..."></textarea>
+                            </div>
+                        </div>
+
+                        <!-- English Section -->
+                        <div class="subject-section">
+                            <h3>English</h3>
+                            <div class="subject-inputs">
+                                <input type="number" id="english-score" min="0" max="10" placeholder="Score (0-10)">
+                                <textarea id="english-note" placeholder="Optional notes..."></textarea>
+                            </div>
+                        </div>
+
+                        <!-- Bangla Section -->
+                        <div class="subject-section">
+                            <h3>Bangla</h3>
+                            <div class="subject-inputs">
+                                <input type="number" id="bangla-score" min="0" max="10" placeholder="Score (0-10)">
+                                <textarea id="bangla-note" placeholder="Optional notes..."></textarea>
+                            </div>
+                        </div>
+
+                        <!-- Science Section -->
+                        <div class="subject-section">
+                            <h3>Science</h3>
+                            <div class="subject-inputs">
+                                <input type="number" id="science-score" min="0" max="10" placeholder="Score (0-10)">
+                                <textarea id="science-note" placeholder="Optional notes..."></textarea>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="modal-actions">
+                        <button type="button" id="cancel-btn" class="cancel-btn">Cancel</button>
+                        <button type="submit" class="submit-btn">Save Progress</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Loading Overlay -->
+        <div id="loading-overlay" class="loading-overlay">
+            <div class="loading-spinner"></div>
+        </div>
+    </div>
+
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>
